@@ -69,7 +69,7 @@ const baseConfig = {
     dimensions: [
       {
         batchMax: 26,
-        defaultValue: 11,
+        defaultValue: 16,
         id: "lineCount",
         interactiveMax: 26,
         mapping: "direct",
@@ -151,7 +151,7 @@ const scenarios: readonly ToolcraftPerformanceScenario[] = derivedPaths.map(
           coversTargets: path.targets,
           expectedObservable:
             "Panning the canvas viewport translates the artboard without recomputing wave geometry.",
-          fixture: "11-line default procedural relief wave",
+          fixture: "16-line default procedural relief wave",
           id: `perf.${path.interaction}`,
           interaction: path.interaction,
           pathId: path.id,
@@ -167,7 +167,7 @@ const scenarios: readonly ToolcraftPerformanceScenario[] = derivedPaths.map(
           coversTargets: path.targets,
           expectedObservable:
             "Zooming the canvas viewport scales the artboard without recomputing wave geometry.",
-          fixture: "11-line default procedural relief wave",
+          fixture: "16-line default procedural relief wave",
           id: `perf.${path.interaction}`,
           interaction: path.interaction,
           pathId: path.id,

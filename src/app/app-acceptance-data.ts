@@ -26,7 +26,7 @@ export const appTransferMode: ToolcraftTransferMode = {
   animationIntent: {
     loopDuration: {
       evidence:
-        "A 6-second seamless loop gives the forward-traveling crest a calm, unhurried cadence across the 11-line relief sequence while keeping video export fast and cyclic.",
+        "A 6-second seamless loop gives the forward-traveling crest a calm, unhurried cadence across the 16-line relief sequence while keeping video export fast and cyclic.",
       seconds: 6,
       source: "product-derived",
     },
@@ -261,7 +261,7 @@ export const appControlSectionInventory: readonly ToolcraftControlSectionInvento
 
 const automatedAcceptanceTestName =
   "validates product acceptance and performance coverage for Gradient Wave";
-const defaultFixture = "default 11-line Gradient Wave composition";
+const defaultFixture = "default 16-line Gradient Wave composition";
 const controlsSpecFile = "e2e/app-controls.spec.ts";
 const runtimeSpecFile = "e2e/app-runtime.spec.ts";
 
@@ -355,7 +355,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     "product-output",
     "Adjust Irregularity in Wave Shape.",
     "Changing Irregularity while Spacing Rhythm is Irregular shifts the non-uniform horizontal spacing and apex offsets across the line sequence.",
-    { fixture: "default 11-line Gradient Wave composition in Irregular mode" },
+    { fixture: "default 16-line Gradient Wave composition in Irregular mode" },
   ),
   controlEntry(
     "shape.arcHeight",
@@ -489,7 +489,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     evidence: "timeline-output",
     expectedObservable:
       "Playing, pausing, scrubbing, and changing duration on the top timeline advances the traveling wave forward and wraps seamlessly from loop end back to start.",
-    fixture: "default 11-line Gradient Wave composition with 6s playback loop",
+    fixture: "default 16-line Gradient Wave composition with 6s playback loop",
     id: "runtime.timeline.playback",
     kind: "runtime",
     timelineCoverage: "playback",
@@ -534,7 +534,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     evidence: "exported-bytes",
     expectedObservable:
       "Exporting PNG while Infinity canvas is active captures the full intrinsic wave scene bounds with matching dimensions and rendered wave strokes.",
-    fixture: "default 11-line Gradient Wave composition in Infinity mode",
+    fixture: "default 16-line Gradient Wave composition in Infinity mode",
     id: "runtime.infinity.image-export",
     infinityCanvasCoverage: "scene-bounds-image-export",
     kind: "runtime",
@@ -552,7 +552,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     evidence: "exported-bytes",
     expectedObservable:
       "Exporting Video while Infinity canvas is active preserves the saved artboard dimensions, loop duration, and decoded wave frames.",
-    fixture: "default 11-line Gradient Wave composition in Infinity mode",
+    fixture: "default 16-line Gradient Wave composition in Infinity mode",
     id: "runtime.infinity.video-export",
     infinityCanvasCoverage: "scene-bounds-video-export",
     kind: "runtime",

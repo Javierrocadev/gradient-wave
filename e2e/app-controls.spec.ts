@@ -121,10 +121,10 @@ test("browser: wave shape controls update rendered SVG line count, spacing rhyth
   await expectToolcraftProductObservableToChange(
     session,
     session.controlAction("shape.lineCount", async (control, currentPage) => {
-      await commitSliderControlValue(control, currentPage, "16");
+      await commitSliderControlValue(control, currentPage, "20");
       await expect(
         currentPage.locator('[data-testid="gradient-wave-foreground-path"]'),
-      ).toHaveCount(16);
+      ).toHaveCount(20);
     }),
     { requirementId: "control.shape.lineCount" },
   );

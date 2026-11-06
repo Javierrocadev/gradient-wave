@@ -58,7 +58,7 @@ export const DEFAULT_WAVE_SETTINGS: WaveSettings = Object.freeze({
   includeBackground: true,
   irregularity: 52,
   lineColor: "#C6EDFF",
-  lineCount: 11,
+  lineCount: 16,
   lineWidth: 9,
   reliefStrength: 68,
   spacing: 100,
@@ -241,8 +241,8 @@ export function evaluateWaveScene(
     normalizedPositions.push(running);
   }
 
-  const baseSpanX = width * 0.64 * (settings.spacing / 100);
-  const centerX = width * 0.525;
+  const baseSpanX = width * 1.4 * (settings.spacing / 100);
+  const centerX = width * 0.61;
   const startX = centerX - baseSpanX * 0.5;
 
   const arcHeightNormalized = settings.arcHeight / 100;
@@ -270,13 +270,13 @@ export function evaluateWaveScene(
     const u = normalizedPositions[index] ?? (count > 1 ? index / (count - 1) : 0.5);
     const linearU = count > 1 ? index / (count - 1) : 0.5;
 
-    // Asymmetric arc envelope modeled after the reference SVG:
-    // rises from mid-left, peaks around u = 0.28, and sweeps down toward bottom-right.
-    const crestCenter = 0.28;
-    const sigma = 0.16 + arcBreadthNormalized * 0.34;
+    // Asymmetric arc envelope extended across the entire viewport:
+    // rises from far-left, peaks around u = 0.32, and sweeps down toward bottom-right.
+    const crestCenter = 0.32;
+    const sigma = 0.18 + arcBreadthNormalized * 0.34;
     const delta = (u - crestCenter) / sigma;
     const asymmetricBell = Math.exp(-delta * delta * (u < crestCenter ? 1.15 : 0.78));
-    const downwardRamp = Math.pow(u, 1.32) * (0.48 - 0.12 * arcBreadthNormalized);
+    const downwardRamp = Math.pow(u, 1.25) * (0.48 - 0.12 * arcBreadthNormalized);
 
     const staticArcY =
       height *

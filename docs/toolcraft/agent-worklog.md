@@ -51,7 +51,7 @@ Active change: delivery-1-gradient-wave
 
 ### Performance
 
-- Decision: Declare a linear `lineCount` workload dimension (`11..26` lines) on `shape.lineCount` and register the single-pass `wave-geometry` vector-build pipeline across all 7 canonical interaction paths.
+- Decision: Declare a linear `lineCount` workload dimension (`16..26` lines) on `shape.lineCount` and register the single-pass `wave-geometry` vector-build pipeline across all 7 canonical interaction paths.
 - Reason: Rebuilding SVG path strings scales linearly with `lineCount` on control changes, slider drags, timeline playback/scrub, and export, while viewport pan and zoom must never invalidate wave geometry.
 - Evidence: `src/app/wave-pipeline.ts`, `src/app/app-performance.ts`, and `e2e/app-performance-path-adapters.ts`.
 
