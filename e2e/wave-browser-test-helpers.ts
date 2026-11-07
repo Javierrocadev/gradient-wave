@@ -103,6 +103,10 @@ export async function pauseTimelineAndSetDuration(
   await expect(page.getByRole("button", { name: "Play playback" })).toBeVisible();
   await scrubber.press("Home");
   await expect(scrubber).toHaveAttribute("aria-valuenow", "0");
+  await expect(page.getByTestId("gradient-wave-svg")).toHaveAttribute(
+    "data-wave-phase",
+    "0.0000",
+  );
 }
 
 export async function commitSliderControlValue(

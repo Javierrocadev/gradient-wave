@@ -46,6 +46,8 @@ const panelPropertyTargets = [
   "shape.arcHeight",
   "shape.arcBreadth",
   "motion.amplitude",
+  "appearance.style",
+  "appearance.grain",
   "appearance.lineWidth",
   "appearance.apexRounding",
   "appearance.lineColor",
@@ -190,13 +192,23 @@ export const appControlSectionInventory: readonly ToolcraftControlSectionInvento
     {
       entity: "Gradient Wave",
       entityId: "gradient-wave",
-      finiteSelectors: [],
+      finiteSelectors: [
+        {
+          affectedTargets: [],
+          reason:
+            "Style Mode switches between classic uniform relief lines and ambient mesh-gradient illumination with film grain.",
+          role: "branch",
+          target: "appearance.style",
+        },
+      ],
       groupingReason:
-        "Groups stroke width, apex corner rounding, highlight color, and directional shadow depth that define the tactile relief appearance.",
+        "Groups style preset, grain intensity, stroke width, apex corner rounding, highlight color, and directional shadow depth that define the tactile relief appearance.",
       id: "relief",
       splitReason:
         "Separates tactile stroke and shadow relief styling from wave geometry, temporal motion, and output encoding.",
       targets: [
+        "appearance.style",
+        "appearance.grain",
         "appearance.lineWidth",
         "appearance.apexRounding",
         "appearance.lineColor",
@@ -265,10 +277,20 @@ const defaultFixture = "default 16-line Gradient Wave composition";
 const controlsSpecFile = "e2e/app-controls.spec.ts";
 const runtimeSpecFile = "e2e/app-runtime.spec.ts";
 
-const shapeTest =
-  "browser: wave shape controls update rendered SVG line count, spacing rhythm, and apex arc geometry";
-const motionReliefTest =
-  "browser: wave motion and line relief controls update rendered SVG strokes and apex displacement";
+const shapeCountTest =
+  "browser: wave line count and spacing controls update rendered SVG intervals";
+const shapeRhythmTest =
+  "browser: wave spacing rhythm controls update rendered SVG intervals";
+const shapeArcTest =
+  "browser: wave apex arc geometry controls update rendered SVG envelope";
+const motionTest =
+  "browser: wave motion and background controls update rendered SVG apex displacement";
+const styleModeTest =
+  "browser: style mode segmented controls update rendered SVG lighting";
+const grainTest =
+  "browser: grain intensity controls update rendered SVG film grain";
+const reliefTest =
+  "browser: line relief controls update rendered SVG strokes and relief depth";
 const exportTest =
   "browser: image and video export controls and footer actions produce valid PNG, JPG, MP4, and WebM artifacts";
 
@@ -313,7 +335,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "appearance.background",
     "color",
-    motionReliefTest,
+    motionTest,
     "standard",
     "product-output",
     "Pick a new Background color in Settings.",
@@ -322,7 +344,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "shape.lineCount",
     "slider",
-    shapeTest,
+    shapeCountTest,
     "standard",
     "product-output",
     "Adjust Line Count in Wave Shape.",
@@ -331,7 +353,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "shape.spacing",
     "slider",
-    shapeTest,
+    shapeCountTest,
     "standard",
     "product-output",
     "Adjust Line Spacing in Wave Shape.",
@@ -340,7 +362,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "shape.spacingMode",
     "segmented",
-    shapeTest,
+    shapeRhythmTest,
     "standard",
     "product-output",
     "Switch Spacing Rhythm between Regular and Irregular.",
@@ -350,7 +372,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "shape.irregularity",
     "slider",
-    shapeTest,
+    shapeRhythmTest,
     "standard",
     "product-output",
     "Adjust Irregularity in Wave Shape.",
@@ -360,7 +382,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "shape.arcHeight",
     "slider",
-    shapeTest,
+    shapeArcTest,
     "standard",
     "product-output",
     "Adjust Arc Height in Wave Shape.",
@@ -369,7 +391,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "shape.arcBreadth",
     "slider",
-    shapeTest,
+    shapeArcTest,
     "standard",
     "product-output",
     "Adjust Arc Breadth in Wave Shape.",
@@ -378,16 +400,36 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "motion.amplitude",
     "slider",
-    motionReliefTest,
+    motionTest,
     "standard",
     "product-output",
     "Adjust Wave Amplitude in Wave Motion.",
     "Changing Wave Amplitude scales the traveling wave displacement of the apex positions.",
   ),
   controlEntry(
+    "appearance.style",
+    "segmented",
+    styleModeTest,
+    "standard",
+    "product-output",
+    "Switch Style Mode between Classic and Ambient in Line Relief.",
+    "Switching Style Mode to Ambient reveals the Grain Intensity slider, activates multi-point radial mesh lighting, applies screen blend illumination, and adds deterministic film grain.",
+    { optionCoverage: ["classic", "ambient"] },
+  ),
+  controlEntry(
+    "appearance.grain",
+    "slider",
+    grainTest,
+    "standard",
+    "product-output",
+    "Adjust Grain Intensity in Line Relief while Ambient style is active.",
+    "Changing Grain Intensity updates the micro-noise overlay opacity in the SVG and Canvas exports.",
+    { fixture: "default 16-line Gradient Wave composition in Ambient mode" },
+  ),
+  controlEntry(
     "appearance.lineWidth",
     "slider",
-    motionReliefTest,
+    reliefTest,
     "standard",
     "product-output",
     "Adjust Line Width in Line Relief.",
@@ -396,7 +438,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "appearance.apexRounding",
     "slider",
-    motionReliefTest,
+    reliefTest,
     "standard",
     "product-output",
     "Adjust Apex Rounding in Line Relief.",
@@ -405,7 +447,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "appearance.lineColor",
     "color",
-    motionReliefTest,
+    reliefTest,
     "standard",
     "product-output",
     "Pick a new Line Color in Line Relief.",
@@ -414,7 +456,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   controlEntry(
     "appearance.reliefStrength",
     "slider",
-    motionReliefTest,
+    reliefTest,
     "standard",
     "product-output",
     "Adjust Relief Depth in Line Relief.",

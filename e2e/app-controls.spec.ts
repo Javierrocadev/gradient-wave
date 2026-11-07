@@ -49,8 +49,8 @@ test("browser: background inclusion switch updates preview, infinity viewport, P
   page,
 }) => {
   await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
   const session = await createToolcraftBrowserProofSession(page);
-  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible();
   await pauseTimelineAndSetDuration(page, "1s");
 
   const infinityField = await getToolcraftControlFieldByTarget(
@@ -110,12 +110,12 @@ test("browser: background inclusion switch updates preview, infinity viewport, P
   );
 });
 
-test("browser: wave shape controls update rendered SVG line count, spacing rhythm, and apex arc geometry", async ({
+test("browser: wave line count and spacing controls update rendered SVG intervals", async ({
   page,
 }) => {
   await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
   const session = await createToolcraftBrowserProofSession(page);
-  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible();
   await pauseTimelineAndSetDuration(page, "1s");
 
   await expectToolcraftProductObservableToChange(
@@ -136,6 +136,15 @@ test("browser: wave shape controls update rendered SVG line count, spacing rhyth
     ),
     { requirementId: "control.shape.spacing" },
   );
+});
+
+test("browser: wave spacing rhythm controls update rendered SVG intervals", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
+  const session = await createToolcraftBrowserProofSession(page);
+  await pauseTimelineAndSetDuration(page, "1s");
 
   await expectToolcraftSegmentedControlCellsPreservePadding(
     page,
@@ -198,6 +207,15 @@ test("browser: wave shape controls update rendered SVG line count, spacing rhyth
       );
     }
   }
+});
+
+test("browser: wave apex arc geometry controls update rendered SVG envelope", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
+  const session = await createToolcraftBrowserProofSession(page);
+  await pauseTimelineAndSetDuration(page, "1s");
 
   await expectToolcraftProductObservableToChange(
     session,
@@ -216,12 +234,12 @@ test("browser: wave shape controls update rendered SVG line count, spacing rhyth
   );
 });
 
-test("browser: wave motion and line relief controls update rendered SVG strokes and apex displacement", async ({
+test("browser: wave motion and background controls update rendered SVG apex displacement", async ({
   page,
 }) => {
   await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
   const session = await createToolcraftBrowserProofSession(page);
-  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible();
   await pauseTimelineAndSetDuration(page, "1s");
 
   await expectToolcraftProductObservableToChange(
@@ -239,6 +257,86 @@ test("browser: wave motion and line relief controls update rendered SVG strokes 
     ),
     { requirementId: "control.motion.amplitude" },
   );
+});
+
+test("browser: style mode segmented controls update rendered SVG lighting", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
+  const session = await createToolcraftBrowserProofSession(page);
+  await pauseTimelineAndSetDuration(page, "1s");
+
+  await expectToolcraftSegmentedControlCellsPreservePadding(
+    page,
+    "Style Mode",
+    {
+      requirementId: "control.appearance.style",
+      target: "appearance.style",
+    },
+  );
+
+  await expectToolcraftProductObservableToChange(
+    session,
+    session.controlAction("appearance.style", async (control) => {
+      await control.getByRole("button", { exact: true, name: "Ambient" }).click();
+    }),
+    { requirementId: "control.appearance.style" },
+  );
+});
+
+test("browser: grain intensity controls update rendered SVG film grain", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
+  const session = await createToolcraftBrowserProofSession(page);
+  await pauseTimelineAndSetDuration(page, "1s");
+
+  const grainCases = getToolcraftControlApplicabilityCases({
+    schema: appSchema,
+    sectionInventory: appControlSectionInventory,
+    target: "appearance.grain",
+  });
+  for (const applicabilityCase of grainCases) {
+    await expectToolcraftControlApplicabilityState(
+      session,
+      session.controlAction("appearance.style", async (control) => {
+        await control
+          .getByRole("button", {
+            exact: true,
+            name: applicabilityCase.selectorOptionLabel!,
+          })
+          .click();
+      }),
+      applicabilityCase,
+      { baseRequirementId: "control.appearance.grain" },
+    );
+    if (applicabilityCase.expectation === "visible") {
+      await page.mouse.move(1, 1);
+      await expectToolcraftProductObservableToChange(
+        session,
+        session.controlAction("appearance.grain", (control, currentPage) =>
+          commitSliderControlValue(control, currentPage, "60%"),
+        ),
+        {
+          requirementId: getToolcraftApplicabilityRequirementId(
+            "control.appearance.grain",
+            applicabilityCase,
+          ),
+        },
+      );
+    }
+  }
+});
+
+test("browser: line relief controls update rendered SVG strokes and relief depth", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
+  const session = await createToolcraftBrowserProofSession(page);
+  await pauseTimelineAndSetDuration(page, "1s");
 
   await expectToolcraftProductObservableToChange(
     session,
@@ -277,8 +375,8 @@ test("browser: image and video export controls and footer actions produce valid 
   page,
 }) => {
   await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
   const session = await createToolcraftBrowserProofSession(page);
-  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible();
   await pauseTimelineAndSetDuration(page, "1s");
 
   await selectControlOptionByTarget(page, "export.image.format", "JPG");

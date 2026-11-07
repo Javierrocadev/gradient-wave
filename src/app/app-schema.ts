@@ -170,6 +170,41 @@ export const appSchema = defineToolcraft({
           },
           {
             controls: {
+              style: {
+                applicability: { mode: "always" },
+                defaultValue: DEFAULT_WAVE_SETTINGS.style,
+                label: "Style Mode",
+                options: [
+                  { label: "Classic", value: "classic" },
+                  { label: "Ambient", value: "ambient" },
+                ],
+                orderRole: "primary",
+                performanceRole: "responsiveness",
+                target: "appearance.style",
+                type: "segmented",
+              },
+              grain: {
+                applicability: {
+                  all: [
+                    {
+                      equals: "ambient",
+                      target: "appearance.style",
+                    },
+                  ],
+                  mode: "conditional",
+                },
+                defaultValue: DEFAULT_WAVE_SETTINGS.grain,
+                label: "Grain Intensity",
+                max: 100,
+                min: 0,
+                orderRole: "detail",
+                performanceRole: "responsiveness",
+                step: 1,
+                target: "appearance.grain",
+                type: "slider",
+                unit: "%",
+                variant: "continuous",
+              },
               lineWidth: {
                 applicability: { mode: "always" },
                 defaultValue: DEFAULT_WAVE_SETTINGS.lineWidth,

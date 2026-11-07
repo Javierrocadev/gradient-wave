@@ -76,10 +76,48 @@ Active change: delivery-1-gradient-wave
 - Verification: `npm run verify:delivery` protected receipt validates unit, acceptance, browser feature, and performance gates.
 - Risks: None; all schema, acceptance, and browser/export contracts are covered by automated tests.
 
+### Delivery 2 - Atmospheric Style Mode and Film Grain Overlay
+
+- Change ID: delivery-2-atmospheric-style
+- Request: Add Option 1 as approved by user: a Style Mode selector (`appearance.style`, "Classic" vs "Atmospheric") and Grain Intensity slider (`appearance.grain`), activating dynamic multi-point mesh gradient lighting, luminous screen blending, depth transparency gradient, and deterministic film grain micro-noise overlay.
+- Task type: Schema controls, procedural shader/pattern model, SVG and Canvas 2D renderer enhancements, acceptance matrix, and browser test coverage.
+- User-visible result: In Line Relief, users can switch between Classic mode (uniform relief lines) and Atmospheric mode (rich radial mesh background glow, luminous screen-blended highlight lines with depth opacity ramp, and fine film grain overlay).
+- Source/reference checked: User feedback and approved HTML prototype comparison preview.
+- Reference inputs: None.
+- Docs/contracts read: `AGENTS.md`, `docs/toolcraft/workflow.md`, `docs/toolcraft/decision-contract.md`, and `docs/toolcraft/acceptance-testing.md`.
+- Contract rules applied: `controls-section-inventory-required`, `runtime-shell-required`, and `output-export-required`.
+- View interaction intent: `non-spatial`.
+- Interaction ownership: Panel controls for `appearance.style` and `appearance.grain` under the `relief` section with `global` scope.
+- Decision: Keep `classic` as the default style mode for backward compatibility with baseline pixel expectations, while `ambient` engages radial mesh lighting pools (`#00E5FF`, `#0055FF`, `#6A00FF`), progressive line opacity (`0.32 -> 0.90`), screen blend illumination, and deterministic SVG `<feTurbulence>` / `<feColorMatrix>` white-noise micro-grain calibrated up to 32% opacity with organic frequency (0.55).
+- Alternatives rejected: Always forcing atmospheric style was rejected to protect existing classic baseline test contracts. CSS `mix-blend-mode: overlay` was rejected because multiplicative dark-background blending crushed grain contrast into zero over dark navy.
+- State/output mapping: `appearance.style` and `appearance.grain` map to `WaveSceneGeometry` properties `style`, `grain`, `grainOpacity`, `hasGrain`, `hasMeshBackground`, `meshLights`, and `lineBlendMode`.
+- Performance intent: ordinary-product-work
+- Verification: `npm run typecheck`, `npm run build`, `npm run docs:check`, Vitest unit and acceptance suites, and Playwright browser specs.
+- Risks: None; Classic mode remains default and identical in output, while Ambient mode is fully deterministic.
+
+### Delivery 3 - Fluted Ribbon Facets and Dynamic Relief Modulation
+
+- Change ID: delivery-3-fluted-facets
+- Request: Add vertical fluted cuts across the wave ribbons in Ambient mode (inspired by the reference of blurred light pools with fluted vertical incisions), integrated smoothly with the background and modulated by the Relief Depth control.
+- Task type: Procedural geometric facet builder (`src/app/wave-facets.ts`), Canvas 2D and SVG facet rendering (`WaveFacetsGroup`), acceptance matrix, and browser tests.
+- User-visible result: In Ambient mode, the spaces between wave lines form alternating light-cyan and shadow-navy facet ribbons. When `appearance.reliefStrength` is adjusted, low-to-medium values produce a subtle fluted glass look, while high values produce deep, marked architectural cuts.
+- Source/reference checked: User-provided reference image showing fluted glass vertical incisions over blurred cyan-blue gradient pools.
+- Reference inputs: `image.png` attachment.
+- Docs/contracts read: `AGENTS.md`, `docs/toolcraft/workflow.md`, and `docs/toolcraft/acceptance-testing.md`.
+- Contract rules applied: `controls-section-inventory-required`, `runtime-shell-required`, and `output-export-required`.
+- View interaction intent: `non-spatial`.
+- Interaction ownership: Panel controls for `appearance.reliefStrength` under the `relief` section.
+- Decision: Create `src/app/wave-facets.ts` with `buildWaveFacets` and `drawWaveFacetsOnCanvas` to maintain strict <700 line budget in `wave-model.ts`. Render facets in SVG using `<WaveFacetsGroup>` between the mesh background and wave shadows. Modulate facet opacity dynamically from `0.04` (at 20% relief) up to `0.48` (at 100% relief). Keep facets disabled in Classic mode (`facets: []`) to ensure 100% backward compatibility.
+- Alternatives rejected: Hardcoding fixed facet opacity was rejected because it prevented user control over cut sharpness and subtlety. Adding an entirely new schema slider was rejected to avoid control clutter when `appearance.reliefStrength` already semantically governs depth and contrast.
+- State/output mapping: `scene.facets` populated when `isAtmospheric && settings.includeBackground`.
+- Performance intent: ordinary-product-work
+- Verification: `npm run typecheck`, `npm run docs:check`, `node scripts/check-toolcraft-integrity.mjs`, and full Playwright test suite `e2e/app-controls.spec.ts` (9 passed).
+- Risks: None; isolated cleanly between `src/app/wave-facets.ts` and `src/app/wave-model.ts`.
+
 ## Evidence
 
-- Source reviewed: `src/app/app-schema.ts`, `src/app/wave-model.ts`, `src/app/wave-renderer.tsx`, `src/app/wave-pipeline.ts`, `src/app/app-performance.ts`, and `src/app/app-acceptance-data.ts`.
-- Contract applied: `runtime-shell-required`, `output-export-required`, `timeline-enabled-behavior`, `infinity-canvas-scene-bounds`, and `performance-coverage-levels`.
+- Source reviewed: `src/app/app-schema.ts`, `src/app/wave-model.ts`, `src/app/wave-renderer.tsx`, and `src/app/app-acceptance-data.ts`.
+- Contract applied: `runtime-shell-required`, `output-export-required`, and `controls-section-inventory-required`.
 
 ## Verification
 

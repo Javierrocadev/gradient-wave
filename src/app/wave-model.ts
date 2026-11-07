@@ -1,4 +1,12 @@
+import {
+  buildWaveFacets,
+  drawWaveFacetsOnCanvas,
+  type WaveFacetGeometry,
+} from "./wave-facets";
+
+export type { WaveFacetGeometry };
 export type WaveSpacingMode = "regular" | "irregular";
+export type WaveStyle = "classic" | "ambient";
 
 export type WaveSettings = Readonly<{
   amplitude: number;
@@ -6,6 +14,7 @@ export type WaveSettings = Readonly<{
   arcBreadth: number;
   arcHeight: number;
   background: string;
+  grain: number;
   includeBackground: boolean;
   irregularity: number;
   lineColor: string;
@@ -14,6 +23,7 @@ export type WaveSettings = Readonly<{
   reliefStrength: number;
   spacing: number;
   spacingMode: WaveSpacingMode;
+  style: WaveStyle;
 }>;
 
 export type WavePoint = Readonly<{
@@ -27,25 +37,46 @@ export type WaveLineGeometry = Readonly<{
   d: string;
   entry: WavePoint;
   exit: WavePoint;
+  foregroundOpacity: number;
+  foregroundStrokeWidth: number;
   index: number;
+  shadowOpacity: number;
+  shadowStrokeWidth: number;
   top: WavePoint;
+}>;
+
+export type WaveMeshLight = Readonly<{
+  color: string;
+  cx: number;
+  cy: number;
+  opacity: number;
+  r: number;
 }>;
 
 export type WaveSceneGeometry = Readonly<{
   background: string;
   crestPoint: WavePoint;
+  facets: readonly WaveFacetGeometry[];
   foregroundOpacity: number;
   foregroundStrokeWidth: number;
+  grain: number;
+  grainOpacity: number;
+  hasGrain: boolean;
+  hasMeshBackground: boolean;
   height: number;
   includeBackground: boolean;
+  lineBlendMode: "normal" | "screen";
   lineColor: string;
   lines: readonly WaveLineGeometry[];
+  meshBaseColor: string;
+  meshLights: readonly WaveMeshLight[];
   phase: number;
   shadowColor: string;
   shadowOffsetX: number;
   shadowOffsetY: number;
   shadowOpacity: number;
   shadowStrokeWidth: number;
+  style: WaveStyle;
   width: number;
 }>;
 
@@ -55,6 +86,7 @@ export const DEFAULT_WAVE_SETTINGS: WaveSettings = Object.freeze({
   arcBreadth: 65,
   arcHeight: 62,
   background: "#0786FF",
+  grain: 24,
   includeBackground: true,
   irregularity: 52,
   lineColor: "#C6EDFF",
@@ -63,6 +95,7 @@ export const DEFAULT_WAVE_SETTINGS: WaveSettings = Object.freeze({
   reliefStrength: 68,
   spacing: 100,
   spacingMode: "irregular",
+  style: "classic",
 });
 
 function clampNumber(
@@ -184,6 +217,12 @@ export function readWaveSettingsFromValues(
       100,
       DEFAULT_WAVE_SETTINGS.reliefStrength,
     ),
+    grain: clampNumber(
+      values["appearance.grain"],
+      0,
+      100,
+      DEFAULT_WAVE_SETTINGS.grain,
+    ),
     spacing: clampNumber(
       values["shape.spacing"],
       45,
@@ -191,6 +230,10 @@ export function readWaveSettingsFromValues(
       DEFAULT_WAVE_SETTINGS.spacing,
     ),
     spacingMode,
+    style:
+      values["appearance.style"] === "ambient"
+        ? "ambient"
+        : "classic",
   };
 }
 
@@ -264,6 +307,17 @@ export function evaluateWaveScene(
   const topY = -bleedY;
   const bottomY = height + bleedY;
 
+  const reliefNormalized = settings.reliefStrength / 100;
+  const foregroundStrokeWidth = Math.max(1.5, settings.lineWidth * scaleMean);
+  const shadowStrokeWidth =
+    foregroundStrokeWidth * (1.15 + reliefNormalized * 1.25);
+  const shadowOffsetX = (3 + reliefNormalized * 13) * scaleX;
+  const shadowOffsetY = (3.5 + reliefNormalized * 14) * scaleY;
+  const shadowOpacity = Math.min(0.72, reliefNormalized * 0.58);
+  const foregroundOpacity = 0.56 + (1 - reliefNormalized * 0.3) * 0.22;
+
+  const isAtmospheric = settings.style === "ambient";
+
   const lines: WaveLineGeometry[] = [];
 
   for (let index = 0; index < count; index += 1) {
@@ -333,25 +387,65 @@ export function evaluateWaveScene(
       `L ${formatCoord(bottomX)} ${formatCoord(bottomY)}`,
     ].join(" ");
 
+    const lineForegroundOpacity = isAtmospheric
+      ? 0.32 + 0.58 * linearU
+      : foregroundOpacity;
+    const lineForegroundStrokeWidth = isAtmospheric
+      ? foregroundStrokeWidth * (0.85 + 0.35 * linearU)
+      : foregroundStrokeWidth;
+    const lineShadowOpacity = isAtmospheric
+      ? shadowOpacity * (0.4 + 0.6 * linearU)
+      : shadowOpacity;
+    const lineShadowStrokeWidth = isAtmospheric
+      ? shadowStrokeWidth * (0.9 + 0.2 * linearU)
+      : shadowStrokeWidth;
+
     lines.push({
       apex: { x: apexX, y: apexY },
       bottom: { x: bottomX, y: bottomY },
       d,
       entry: { x: entryX, y: entryY },
       exit: { x: exitX, y: exitY },
+      foregroundOpacity: lineForegroundOpacity,
+      foregroundStrokeWidth: lineForegroundStrokeWidth,
       index,
+      shadowOpacity: lineShadowOpacity,
+      shadowStrokeWidth: lineShadowStrokeWidth,
       top: { x: topX, y: topY },
     });
   }
+  const lineBlendMode = isAtmospheric ? "screen" : "normal";
+  const hasMeshBackground = isAtmospheric && settings.includeBackground;
+  const meshBaseColor = "#021226";
+  const meshLights: WaveMeshLight[] = isAtmospheric
+    ? [
+        {
+          color: "#00E5FF",
+          cx: width * 0.42,
+          cy: height * 0.38,
+          opacity: 0.45,
+          r: Math.max(width, height) * 0.65,
+        },
+        {
+          color: "#0055FF",
+          cx: width * 0.15,
+          cy: height * 0.75,
+          opacity: 0.55,
+          r: Math.max(width, height) * 0.55,
+        },
+        {
+          color: "#6A00FF",
+          cx: width * 0.82,
+          cy: height * 0.70,
+          opacity: 0.38,
+          r: Math.max(width, height) * 0.60,
+        },
+      ]
+    : [];
 
-  const reliefNormalized = settings.reliefStrength / 100;
-  const foregroundStrokeWidth = Math.max(1.5, settings.lineWidth * scaleMean);
-  const shadowStrokeWidth =
-    foregroundStrokeWidth * (1.15 + reliefNormalized * 1.25);
-  const shadowOffsetX = (3 + reliefNormalized * 13) * scaleX;
-  const shadowOffsetY = (3.5 + reliefNormalized * 14) * scaleY;
-  const shadowOpacity = Math.min(0.72, reliefNormalized * 0.58);
-  const foregroundOpacity = 0.56 + (1 - reliefNormalized * 0.3) * 0.22;
+  const hasGrain =
+    isAtmospheric && settings.includeBackground && settings.grain > 0;
+  const grainOpacity = hasGrain ? (settings.grain / 100) * 0.32 : 0;
 
   const shadowColor = deriveReliefShadowColor(
     settings.background,
@@ -365,24 +459,40 @@ export function evaluateWaveScene(
     height * 0.36 +
     Math.sin(tauPhase) * height * (0.04 + amplitudeNormalized * 0.14);
 
+  const facets = buildWaveFacets(
+    lines,
+    isAtmospheric && settings.includeBackground,
+    reliefNormalized,
+  );
+
   return {
     background: settings.background,
     crestPoint: { x: crestX, y: crestY },
+    facets,
     foregroundOpacity,
     foregroundStrokeWidth,
+    grain: settings.grain,
+    grainOpacity,
+    hasGrain,
+    hasMeshBackground,
     height,
     includeBackground: settings.includeBackground,
+    lineBlendMode,
     lineColor: settings.lineColor,
     lines,
+    meshBaseColor,
+    meshLights,
     phase,
     shadowColor,
     shadowOffsetX,
     shadowOffsetY,
     shadowOpacity,
     shadowStrokeWidth,
+    style: settings.style,
     width,
   };
 }
+
 
 function strokeWaveLinesOnCanvas(
   ctx: CanvasRenderingContext2D,
@@ -405,6 +515,120 @@ function strokeWaveLinesOnCanvas(
   }
 }
 
+function strokeAmbientLinesOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  lines: readonly WaveLineGeometry[],
+  offsetX: number,
+  offsetY: number,
+  isShadow: boolean,
+): void {
+  for (const line of lines) {
+    ctx.save();
+    ctx.globalAlpha = isShadow ? line.shadowOpacity : line.foregroundOpacity;
+    ctx.lineWidth = isShadow
+      ? line.shadowStrokeWidth
+      : line.foregroundStrokeWidth;
+    ctx.beginPath();
+    ctx.moveTo(line.top.x + offsetX, line.top.y + offsetY);
+    ctx.lineTo(line.entry.x + offsetX, line.entry.y + offsetY);
+    ctx.quadraticCurveTo(
+      line.apex.x + offsetX,
+      line.apex.y + offsetY,
+      line.exit.x + offsetX,
+      line.exit.y + offsetY,
+    );
+    ctx.lineTo(line.bottom.x + offsetX, line.bottom.y + offsetY);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawMeshLightsOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  scene: WaveSceneGeometry,
+): void {
+  if (!scene.hasMeshBackground || scene.meshLights.length === 0) {
+    return;
+  }
+  ctx.save();
+  ctx.fillStyle = scene.meshBaseColor;
+  ctx.fillRect(0, 0, scene.width, scene.height);
+  for (const light of scene.meshLights) {
+    const grad = ctx.createRadialGradient(
+      light.cx,
+      light.cy,
+      0,
+      light.cx,
+      light.cy,
+      light.r,
+    );
+    grad.addColorStop(0, light.color);
+    grad.addColorStop(0.5, light.color);
+    grad.addColorStop(1, "transparent");
+    ctx.save();
+    ctx.globalAlpha = light.opacity;
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, scene.width, scene.height);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawWaveShadowOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  scene: WaveSceneGeometry,
+): void {
+  if (scene.shadowOpacity <= 0.005) {
+    return;
+  }
+  if (scene.style === "ambient") {
+    ctx.save();
+    ctx.strokeStyle = scene.shadowColor;
+    strokeAmbientLinesOnCanvas(
+      ctx,
+      scene.lines,
+      scene.shadowOffsetX,
+      scene.shadowOffsetY,
+      true,
+    );
+    ctx.restore();
+    return;
+  }
+  ctx.save();
+  ctx.globalAlpha = scene.shadowOpacity;
+  ctx.strokeStyle = scene.shadowColor;
+  ctx.lineWidth = scene.shadowStrokeWidth;
+  strokeWaveLinesOnCanvas(
+    ctx,
+    scene.lines,
+    scene.shadowOffsetX,
+    scene.shadowOffsetY,
+  );
+  ctx.restore();
+}
+
+function drawWaveForegroundOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  scene: WaveSceneGeometry,
+): void {
+  if (scene.style === "ambient") {
+    ctx.save();
+    if (scene.lineBlendMode === "screen") {
+      ctx.globalCompositeOperation = "screen";
+    }
+    ctx.strokeStyle = scene.lineColor;
+    strokeAmbientLinesOnCanvas(ctx, scene.lines, 0, 0, false);
+    ctx.restore();
+    return;
+  }
+  ctx.save();
+  ctx.globalAlpha = scene.foregroundOpacity;
+  ctx.strokeStyle = scene.lineColor;
+  ctx.lineWidth = scene.foregroundStrokeWidth;
+  strokeWaveLinesOnCanvas(ctx, scene.lines, 0, 0);
+  ctx.restore();
+}
+
 export function renderWaveSceneToCanvas2D(
   ctx: CanvasRenderingContext2D,
   scene: WaveSceneGeometry,
@@ -419,26 +643,15 @@ export function renderWaveSceneToCanvas2D(
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  if (scene.shadowOpacity > 0.005) {
-    ctx.save();
-    ctx.globalAlpha = scene.shadowOpacity;
-    ctx.strokeStyle = scene.shadowColor;
-    ctx.lineWidth = scene.shadowStrokeWidth;
-    strokeWaveLinesOnCanvas(
-      ctx,
-      scene.lines,
-      scene.shadowOffsetX,
-      scene.shadowOffsetY,
-    );
-    ctx.restore();
+  if (scene.includeBackground && !scene.hasMeshBackground) {
+    ctx.fillStyle = scene.background;
+    ctx.fillRect(0, 0, scene.width, scene.height);
   }
 
-  ctx.save();
-  ctx.globalAlpha = scene.foregroundOpacity;
-  ctx.strokeStyle = scene.lineColor;
-  ctx.lineWidth = scene.foregroundStrokeWidth;
-  strokeWaveLinesOnCanvas(ctx, scene.lines, 0, 0);
-  ctx.restore();
+  drawMeshLightsOnCanvas(ctx, scene);
+  drawWaveFacetsOnCanvas(ctx, scene.facets, scene.lines);
+  drawWaveShadowOnCanvas(ctx, scene);
+  drawWaveForegroundOnCanvas(ctx, scene);
 
   ctx.restore();
 }
