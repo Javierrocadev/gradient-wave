@@ -114,6 +114,25 @@ Active change: delivery-1-gradient-wave
 - Verification: `npm run typecheck`, `npm run docs:check`, `node scripts/check-toolcraft-integrity.mjs`, and full Playwright test suite `e2e/app-controls.spec.ts` (9 passed).
 - Risks: None; isolated cleanly between `src/app/wave-facets.ts` and `src/app/wave-model.ts`.
 
+### Delivery 4 - Dynamic Ambient Palette and Geometry Tracking
+
+- Change ID: delivery-4-dynamic-ambient-palette
+- Request: User requested that Ambient mode no longer have hardcoded preconfigured colors and static shapes, allowing full customization of both color and shape elements via the existing controls.
+- Task type: Procedural mesh light and facet shader model enhancements, reactive palette derivation, and wave geometry binding.
+- User-visible result: In Ambient mode, the background base color, atmospheric radial lights, and vertical facet cuts now dynamically derive from the user's selected Background Color (`appearance.background`) and Line Color (`appearance.lineColor`). Furthermore, the primary ambient light spot now tracks the wave crest and animates with wave motion, and light radii respond to arc breadth and spacing.
+- Source/reference checked: User feedback and clarification decision.
+- Reference inputs: None.
+- Docs/contracts read: `AGENTS.md`, `docs/toolcraft/workflow.md`, and `docs/toolcraft/acceptance-testing.md`.
+- Contract rules applied: `controls-section-inventory-required`, `runtime-shell-required`, and `output-export-required`.
+- View interaction intent: `non-spatial`.
+- Interaction ownership: Panel controls for `appearance.background` and `appearance.lineColor` under `background` and `relief` sections.
+- Decision: Derive `meshBaseColor` via `deriveAmbientBaseColor(background)` and harmonic light via `deriveAmbientHarmonicColor(background, lineColor)`. Bind Light 1 to `crestX` and `crestY` so it dynamically shifts and animates with wave amplitude and timeline loop progress. Pass `lineColor` and `shadowColor` into `buildWaveFacets` so facet cuts adopt the user's custom palette.
+- Alternatives rejected: Adding new dedicated color pickers for mesh spots was rejected to avoid control clutter and keep the interface clean and cohesive, as requested by the user.
+- State/output mapping: `scene.meshBaseColor`, `scene.meshLights`, and `scene.facets` derive dynamically from `settings.background`, `settings.lineColor`, and wave geometry.
+- Performance intent: ordinary-product-work
+- Verification: `npm run typecheck`, `npm run docs:check`, `node scripts/check-toolcraft-integrity.mjs`, Vitest worklog test, and Playwright e2e test suite (9 passed).
+- Risks: None; Classic mode remains unchanged and fully backwards compatible.
+
 ## Evidence
 
 - Source reviewed: `src/app/app-schema.ts`, `src/app/wave-model.ts`, `src/app/wave-renderer.tsx`, and `src/app/app-acceptance-data.ts`.

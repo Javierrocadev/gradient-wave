@@ -15,6 +15,8 @@ export function buildWaveFacets(
   lines: readonly WaveLineGeometry[],
   isAtmospheric: boolean,
   reliefNormalized: number,
+  highlightColor: string,
+  shadowColor: string,
 ): readonly WaveFacetGeometry[] {
   if (!isAtmospheric || reliefNormalized <= 0 || lines.length < 2) {
     return [];
@@ -30,7 +32,7 @@ export function buildWaveFacets(
       continue;
     }
     const isEven = i % 2 === 0;
-    const fill = isEven ? "#00E5FF" : "#001026";
+    const fill = isEven ? highlightColor : shadowColor;
     const opacity = isEven ? baseLightOpacity : baseDarkOpacity;
 
     const d = [

@@ -144,6 +144,23 @@ function deriveReliefShadowColor(background: string, lineColor: string): string 
   return `#${toHexChannel(shadowR)}${toHexChannel(shadowG)}${toHexChannel(shadowB)}`;
 }
 
+function deriveAmbientBaseColor(background: string): string {
+  const [bgR, bgG, bgB] = parseHexRgb(background);
+  return `#${toHexChannel(bgR * 0.12)}${toHexChannel(bgG * 0.14)}${toHexChannel(bgB * 0.18)}`;
+}
+
+function deriveAmbientHarmonicColor(
+  background: string,
+  lineColor: string,
+): string {
+  const [bgR, bgG, bgB] = parseHexRgb(background);
+  const [fgR, fgG, fgB] = parseHexRgb(lineColor);
+  const hR = Math.min(255, bgR * 0.45 + fgR * 0.55);
+  const hG = Math.min(255, bgG * 0.35 + fgG * 0.45);
+  const hB = Math.min(255, bgB * 0.65 + fgB * 0.35);
+  return `#${toHexChannel(hR)}${toHexChannel(hG)}${toHexChannel(hB)}`;
+}
+
 export function readWaveSettingsFromValues(
   values: Readonly<Record<string, unknown>>,
 ): WaveSettings {
@@ -414,39 +431,6 @@ export function evaluateWaveScene(
       top: { x: topX, y: topY },
     });
   }
-  const lineBlendMode = isAtmospheric ? "screen" : "normal";
-  const hasMeshBackground = isAtmospheric && settings.includeBackground;
-  const meshBaseColor = "#021226";
-  const meshLights: WaveMeshLight[] = isAtmospheric
-    ? [
-        {
-          color: "#00E5FF",
-          cx: width * 0.42,
-          cy: height * 0.38,
-          opacity: 0.45,
-          r: Math.max(width, height) * 0.65,
-        },
-        {
-          color: "#0055FF",
-          cx: width * 0.15,
-          cy: height * 0.75,
-          opacity: 0.55,
-          r: Math.max(width, height) * 0.55,
-        },
-        {
-          color: "#6A00FF",
-          cx: width * 0.82,
-          cy: height * 0.70,
-          opacity: 0.38,
-          r: Math.max(width, height) * 0.60,
-        },
-      ]
-    : [];
-
-  const hasGrain =
-    isAtmospheric && settings.includeBackground && settings.grain > 0;
-  const grainOpacity = hasGrain ? (settings.grain / 100) * 0.32 : 0;
-
   const shadowColor = deriveReliefShadowColor(
     settings.background,
     settings.lineColor,
@@ -459,10 +443,48 @@ export function evaluateWaveScene(
     height * 0.36 +
     Math.sin(tauPhase) * height * (0.04 + amplitudeNormalized * 0.14);
 
+  const lineBlendMode = isAtmospheric ? "screen" : "normal";
+  const hasMeshBackground = isAtmospheric && settings.includeBackground;
+  const meshBaseColor = deriveAmbientBaseColor(settings.background);
+  const meshLights: WaveMeshLight[] = isAtmospheric
+    ? [
+        {
+          color: settings.lineColor,
+          cx: crestX,
+          cy: crestY,
+          opacity: 0.45,
+          r: Math.max(width, height) * (0.50 + arcBreadthNormalized * 0.25),
+        },
+        {
+          color: settings.background,
+          cx: width * (0.15 + 0.10 * arcBreadthNormalized),
+          cy: height * (0.75 - 0.10 * arcHeightNormalized),
+          opacity: 0.55,
+          r: Math.max(width, height) * (0.50 + 0.20 * (settings.spacing / 100)),
+        },
+        {
+          color: deriveAmbientHarmonicColor(
+            settings.background,
+            settings.lineColor,
+          ),
+          cx: width * 0.82,
+          cy: height * (0.65 - 0.15 * amplitudeNormalized),
+          opacity: 0.38,
+          r: Math.max(width, height) * 0.60,
+        },
+      ]
+    : [];
+
+  const hasGrain =
+    isAtmospheric && settings.includeBackground && settings.grain > 0;
+  const grainOpacity = hasGrain ? (settings.grain / 100) * 0.32 : 0;
+
   const facets = buildWaveFacets(
     lines,
     isAtmospheric && settings.includeBackground,
     reliefNormalized,
+    settings.lineColor,
+    shadowColor,
   );
 
   return {
