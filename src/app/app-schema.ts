@@ -177,10 +177,55 @@ export const appSchema = defineToolcraft({
                 options: [
                   { label: "Classic", value: "classic" },
                   { label: "Ambient", value: "ambient" },
+                  { label: "Flute", value: "flute" },
+                  { label: "Glass", value: "glass" },
                 ],
                 orderRole: "primary",
                 performanceRole: "responsiveness",
                 target: "appearance.style",
+                type: "segmented",
+              },
+              ambientIntensity: {
+                applicability: {
+                  all: [
+                    {
+                      oneOf: ["ambient", "flute", "glass"],
+                      target: "appearance.style",
+                    },
+                  ],
+                  mode: "conditional",
+                },
+                defaultValue: DEFAULT_WAVE_SETTINGS.ambientIntensity,
+                label: "Atmosphere Intensity",
+                max: 100,
+                min: 0,
+                orderRole: "detail",
+                performanceRole: "responsiveness",
+                step: 1,
+                target: "appearance.ambientIntensity",
+                type: "slider",
+                unit: "%",
+                variant: "continuous",
+              },
+              ambientTone: {
+                applicability: {
+                  all: [
+                    {
+                      oneOf: ["ambient", "flute", "glass"],
+                      target: "appearance.style",
+                    },
+                  ],
+                  mode: "conditional",
+                },
+                defaultValue: DEFAULT_WAVE_SETTINGS.ambientTone,
+                label: "Atmosphere Filter",
+                options: [
+                  { label: "Dark", value: "dark" },
+                  { label: "Light", value: "light" },
+                ],
+                orderRole: "detail",
+                performanceRole: "responsiveness",
+                target: "appearance.ambientTone",
                 type: "segmented",
               },
               grain: {
@@ -239,6 +284,7 @@ export const appSchema = defineToolcraft({
                 label: "Line Color",
                 orderRole: "detail",
                 performanceRole: "responsiveness",
+                semanticGroup: "line-highlight",
                 target: "appearance.lineColor",
                 type: "color",
               },
@@ -252,6 +298,46 @@ export const appSchema = defineToolcraft({
                 performanceRole: "responsiveness",
                 step: 1,
                 target: "appearance.reliefStrength",
+                type: "slider",
+                unit: "%",
+                variant: "continuous",
+              },
+              glassColor: {
+                applicability: {
+                  all: [
+                    {
+                      equals: "glass",
+                      target: "appearance.style",
+                    },
+                  ],
+                  mode: "conditional",
+                },
+                defaultValue: DEFAULT_WAVE_SETTINGS.glassColor,
+                label: "Glass Glow Color",
+                orderRole: "detail",
+                performanceRole: "responsiveness",
+                semanticGroup: "glass-glow",
+                target: "appearance.glassColor",
+                type: "color",
+              },
+              glassBlur: {
+                applicability: {
+                  all: [
+                    {
+                      equals: "glass",
+                      target: "appearance.style",
+                    },
+                  ],
+                  mode: "conditional",
+                },
+                defaultValue: DEFAULT_WAVE_SETTINGS.glassBlur,
+                label: "Glass Glow Blur",
+                max: 100,
+                min: 10,
+                orderRole: "detail",
+                performanceRole: "responsiveness",
+                step: 1,
+                target: "appearance.glassBlur",
                 type: "slider",
                 unit: "%",
                 variant: "continuous",

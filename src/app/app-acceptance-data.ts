@@ -47,7 +47,10 @@ const panelPropertyTargets = [
   "shape.arcBreadth",
   "motion.amplitude",
   "appearance.style",
+  "appearance.ambientIntensity",
   "appearance.grain",
+  "appearance.glassColor",
+  "appearance.glassBlur",
   "appearance.lineWidth",
   "appearance.apexRounding",
   "appearance.lineColor",
@@ -208,7 +211,10 @@ export const appControlSectionInventory: readonly ToolcraftControlSectionInvento
         "Separates tactile stroke and shadow relief styling from wave geometry, temporal motion, and output encoding.",
       targets: [
         "appearance.style",
+        "appearance.ambientIntensity",
         "appearance.grain",
+        "appearance.glassColor",
+        "appearance.glassBlur",
         "appearance.lineWidth",
         "appearance.apexRounding",
         "appearance.lineColor",
@@ -287,8 +293,14 @@ const motionTest =
   "browser: wave motion and background controls update rendered SVG apex displacement";
 const styleModeTest =
   "browser: style mode segmented controls update rendered SVG lighting";
+const ambientIntensityTest =
+  "browser: atmosphere intensity controls update rendered SVG atmospheric lighting";
 const grainTest =
   "browser: grain intensity controls update rendered SVG film grain";
+const glassColorTest =
+  "browser: glass glow color controls update rendered SVG refraction";
+const glassBlurTest =
+  "browser: glass glow blur controls update rendered SVG refraction";
 const reliefTest =
   "browser: line relief controls update rendered SVG strokes and relief depth";
 const exportTest =
@@ -412,9 +424,19 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     styleModeTest,
     "standard",
     "product-output",
-    "Switch Style Mode between Classic and Ambient in Line Relief.",
-    "Switching Style Mode to Ambient reveals the Grain Intensity slider, activates multi-point radial mesh lighting, applies screen blend illumination, and adds deterministic film grain.",
-    { optionCoverage: ["classic", "ambient"] },
+    "Switch Style Mode between Classic, Ambient, Flute, and Glass in Line Relief.",
+    "Switching Style Mode reveals the Grain Intensity slider, activates multi-point radial mesh lighting, and selectively applies fluted or refractive glass facet ribbons.",
+    { optionCoverage: ["classic", "ambient", "flute", "glass"] },
+  ),
+  controlEntry(
+    "appearance.ambientIntensity",
+    "slider",
+    ambientIntensityTest,
+    "standard",
+    "product-output",
+    "Adjust Atmosphere Intensity in Line Relief while an atmospheric style is active.",
+    "Changing Atmosphere Intensity updates the radial mesh illumination strength and rendered SVG data-wave-ambient-intensity attribute.",
+    { fixture: "default 16-line Gradient Wave composition in Ambient mode" },
   ),
   controlEntry(
     "appearance.grain",
@@ -425,6 +447,26 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     "Adjust Grain Intensity in Line Relief while Ambient style is active.",
     "Changing Grain Intensity updates the micro-noise overlay opacity in the SVG and Canvas exports.",
     { fixture: "default 16-line Gradient Wave composition in Ambient mode" },
+  ),
+  controlEntry(
+    "appearance.glassColor",
+    "color",
+    glassColorTest,
+    "standard",
+    "product-output",
+    "Pick a new Glass Glow Color in Line Relief while Glass style is active.",
+    "Changing Glass Glow Color updates the radial mesh illumination orb tint and rendered SVG data-wave-glass-color attribute.",
+    { fixture: "default 16-line Gradient Wave composition in Glass mode" },
+  ),
+  controlEntry(
+    "appearance.glassBlur",
+    "slider",
+    glassBlurTest,
+    "standard",
+    "product-output",
+    "Adjust Glass Glow Blur in Line Relief while Glass style is active.",
+    "Changing Glass Glow Blur updates the radial mesh light radius, filter blur stdDeviation, and rendered SVG data-wave-glass-blur attribute.",
+    { fixture: "default 16-line Gradient Wave composition in Glass mode" },
   ),
   controlEntry(
     "appearance.lineWidth",

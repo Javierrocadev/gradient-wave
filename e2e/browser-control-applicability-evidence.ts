@@ -38,6 +38,7 @@ export async function expectToolcraftControlApplicabilityState(
     .poll(
       () => countToolcraftControlOwnersByTarget(page, applicabilityCase.target),
       {
+        intervals: [20],
         message: `Control "${applicabilityCase.target}" should be ${applicabilityCase.expectation} for ${applicabilityCase.selectorTarget}=${JSON.stringify(applicabilityCase.selectorValue)}.`,
         timeout: options.timeoutMs ?? 5_000,
       },

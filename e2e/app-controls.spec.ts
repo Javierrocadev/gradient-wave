@@ -1,8 +1,4 @@
-import {
-  getToolcraftImageExportSize,
-  getToolcraftVideoExportSize,
-} from "@/toolcraft/runtime";
-
+import { getToolcraftImageExportSize, getToolcraftVideoExportSize } from "@/toolcraft/runtime";
 import {
   appControlSectionInventory,
   getToolcraftApplicabilityRequirementId,
@@ -40,10 +36,15 @@ import {
   inspectBackgroundExcludedImage,
   inspectBackgroundPreservedVideo,
   observeWaveBackgroundPreview,
+  pausePlayback,
   pauseTimelineAndSetDuration,
   selectControlOptionByTarget,
   triggerFooterExportDownload,
 } from "./wave-browser-test-helpers";
+import {
+  verifyStyleConditionalColor,
+  verifyStyleConditionalSlider,
+} from "./wave-control-test-utils";
 
 test("browser: background inclusion switch updates preview, infinity viewport, PNG alpha, and video background", async ({
   page,
@@ -285,6 +286,21 @@ test("browser: style mode segmented controls update rendered SVG lighting", asyn
   );
 });
 
+test("browser: atmosphere intensity controls update rendered SVG atmospheric lighting", async ({
+  page,
+}) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
+  const session = await createToolcraftBrowserProofSession(page);
+  await pausePlayback(page);
+  await verifyStyleConditionalSlider(
+    session,
+    page,
+    "appearance.ambientIntensity",
+    "40%",
+  );
+});
+
 test("browser: grain intensity controls update rendered SVG film grain", async ({
   page,
 }) => {
@@ -292,42 +308,42 @@ test("browser: grain intensity controls update rendered SVG film grain", async (
   await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
   const session = await createToolcraftBrowserProofSession(page);
   await pauseTimelineAndSetDuration(page, "1s");
+  await verifyStyleConditionalSlider(
+    session,
+    page,
+    "appearance.grain",
+    "60%",
+  );
+});
 
-  const grainCases = getToolcraftControlApplicabilityCases({
-    schema: appSchema,
-    sectionInventory: appControlSectionInventory,
-    target: "appearance.grain",
-  });
-  for (const applicabilityCase of grainCases) {
-    await expectToolcraftControlApplicabilityState(
-      session,
-      session.controlAction("appearance.style", async (control) => {
-        await control
-          .getByRole("button", {
-            exact: true,
-            name: applicabilityCase.selectorOptionLabel!,
-          })
-          .click();
-      }),
-      applicabilityCase,
-      { baseRequirementId: "control.appearance.grain" },
-    );
-    if (applicabilityCase.expectation === "visible") {
-      await page.mouse.move(1, 1);
-      await expectToolcraftProductObservableToChange(
-        session,
-        session.controlAction("appearance.grain", (control, currentPage) =>
-          commitSliderControlValue(control, currentPage, "60%"),
-        ),
-        {
-          requirementId: getToolcraftApplicabilityRequirementId(
-            "control.appearance.grain",
-            applicabilityCase,
-          ),
-        },
-      );
-    }
-  }
+test("browser: glass glow color controls update rendered SVG refraction", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
+  const session = await createToolcraftBrowserProofSession(page);
+  await pauseTimelineAndSetDuration(page, "1s");
+  await verifyStyleConditionalColor(
+    session,
+    page,
+    "appearance.glassColor",
+    "FFE082",
+  );
+});
+
+test("browser: glass glow blur controls update rendered SVG refraction", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible({ timeout: 15_000 });
+  const session = await createToolcraftBrowserProofSession(page);
+  await pauseTimelineAndSetDuration(page, "1s");
+  await verifyStyleConditionalSlider(
+    session,
+    page,
+    "appearance.glassBlur",
+    "76%",
+  );
 });
 
 test("browser: line relief controls update rendered SVG strokes and relief depth", async ({

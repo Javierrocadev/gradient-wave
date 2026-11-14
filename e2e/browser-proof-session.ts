@@ -53,6 +53,7 @@ export type ToolcraftBrowserProofSession = {
 
 type SessionRecord = {
   appTitle: string;
+  lastIdentityCheck?: number;
   origin: string;
   page: Page;
   rootElement: ElementHandle<HTMLElement>;
@@ -139,6 +140,11 @@ async function assertLiveToolcraftSession(record: SessionRecord): Promise<void> 
     getHttpOrigin(record.page),
     "The Toolcraft browser proof page must remain on its verified server origin.",
   ).toBe(record.origin);
+  const now = Date.now();
+  if (now - (record.lastIdentityCheck ?? 0) < 500) {
+    return;
+  }
+  record.lastIdentityCheck = now;
   const serverIdentity = await readToolcraftServerIdentity(
     record.page,
     record.origin,

@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 import { expect, type Locator, type Page } from "@playwright/test";
 
 const maxRasterDimension = 4096;
@@ -114,16 +112,14 @@ async function decodeRasterSnapshot(
           canvas.width,
           canvas.height,
         ).data;
-        let pixelBytesBase64 = "";
-        const chunkSize = 32_768;
-        for (let offset = 0; offset < pixels.length; offset += chunkSize) {
-          pixelBytesBase64 += String.fromCharCode(
-            ...pixels.subarray(offset, offset + chunkSize),
-          );
-        }
+        const hashBuffer = await crypto.subtle.digest("SHA-256", pixels);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const rasterHash = hashArray
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
         return {
           height: canvas.height,
-          pixelBytesBase64: btoa(pixelBytesBase64),
+          rasterHash,
           width: canvas.width,
         };
       } finally {
@@ -139,13 +135,7 @@ async function decodeRasterSnapshot(
     },
   );
 
-  return JSON.stringify({
-    height: snapshot.height,
-    rasterHash: createHash("sha256")
-      .update(Buffer.from(snapshot.pixelBytesBase64, "base64"))
-      .digest("hex"),
-    width: snapshot.width,
-  });
+  return JSON.stringify(snapshot);
 }
 
 export async function resolveToolcraftProductRasterProbe(
@@ -202,16 +192,22 @@ export async function resolveToolcraftProductRasterProbe(
     capture: async () => {
       const pageSelectors = warmedSelectors.get(page) ?? new Set<string>();
       const key = `${probe.selector}:${JSON.stringify(probe.region ?? null)}`;
+      const effectiveScreenshotOptions = probe.region
+        ? { ...screenshotOptions, clip: probe.region }
+        : screenshotOptions;
       if (!pageSelectors.has(key)) {
-        await locator.screenshot(screenshotOptions);
+        await locator.screenshot(effectiveScreenshotOptions);
         await page.evaluate(
           () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())),
         );
         pageSelectors.add(key);
         warmedSelectors.set(page, pageSelectors);
       }
-      const raster = await locator.screenshot(screenshotOptions);
-      return decodeRasterSnapshot(page, raster, probe.region, probe.selector);
+      const raster = await locator.screenshot(effectiveScreenshotOptions);
+      const decodeRegion = probe.region
+        ? { height: probe.region.height, width: probe.region.width, x: 0, y: 0 }
+        : undefined;
+      return decodeRasterSnapshot(page, raster, decodeRegion, probe.selector);
     },
     locator,
   };

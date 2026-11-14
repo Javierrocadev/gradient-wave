@@ -1,19 +1,27 @@
 import {
+  buildMeshLights,
   buildWaveFacets,
+  deriveAmbientBaseColor,
+  deriveAmbientHarmonicColor,
   drawWaveFacetsOnCanvas,
   type WaveFacetGeometry,
 } from "./wave-facets";
 
 export type { WaveFacetGeometry };
+export type WaveAmbientTone = "dark" | "light";
 export type WaveSpacingMode = "regular" | "irregular";
-export type WaveStyle = "classic" | "ambient";
+export type WaveStyle = "classic" | "ambient" | "flute" | "glass";
 
 export type WaveSettings = Readonly<{
+  ambientIntensity: number;
+  ambientTone: WaveAmbientTone;
   amplitude: number;
   apexRounding: number;
   arcBreadth: number;
   arcHeight: number;
   background: string;
+  glassBlur: number;
+  glassColor: string;
   grain: number;
   includeBackground: boolean;
   irregularity: number;
@@ -47,6 +55,7 @@ export type WaveLineGeometry = Readonly<{
 
 export type WaveMeshLight = Readonly<{
   color: string;
+  coreColor?: string;
   cx: number;
   cy: number;
   opacity: number;
@@ -54,11 +63,15 @@ export type WaveMeshLight = Readonly<{
 }>;
 
 export type WaveSceneGeometry = Readonly<{
+  ambientIntensity: number;
+  ambientTone: WaveAmbientTone;
   background: string;
   crestPoint: WavePoint;
   facets: readonly WaveFacetGeometry[];
   foregroundOpacity: number;
   foregroundStrokeWidth: number;
+  glassBlur: number;
+  glassColor: string;
   grain: number;
   grainOpacity: number;
   hasGrain: boolean;
@@ -81,11 +94,15 @@ export type WaveSceneGeometry = Readonly<{
 }>;
 
 export const DEFAULT_WAVE_SETTINGS: WaveSettings = Object.freeze({
+  ambientIntensity: 65,
+  ambientTone: "dark",
   amplitude: 55,
   apexRounding: 48,
   arcBreadth: 65,
   arcHeight: 62,
   background: "#0786FF",
+  glassBlur: 48,
+  glassColor: "#FFFFFF",
   grain: 24,
   includeBackground: true,
   irregularity: 52,
@@ -144,23 +161,6 @@ function deriveReliefShadowColor(background: string, lineColor: string): string 
   return `#${toHexChannel(shadowR)}${toHexChannel(shadowG)}${toHexChannel(shadowB)}`;
 }
 
-function deriveAmbientBaseColor(background: string): string {
-  const [bgR, bgG, bgB] = parseHexRgb(background);
-  return `#${toHexChannel(bgR * 0.12)}${toHexChannel(bgG * 0.14)}${toHexChannel(bgB * 0.18)}`;
-}
-
-function deriveAmbientHarmonicColor(
-  background: string,
-  lineColor: string,
-): string {
-  const [bgR, bgG, bgB] = parseHexRgb(background);
-  const [fgR, fgG, fgB] = parseHexRgb(lineColor);
-  const hR = Math.min(255, bgR * 0.45 + fgR * 0.55);
-  const hG = Math.min(255, bgG * 0.35 + fgG * 0.45);
-  const hB = Math.min(255, bgB * 0.65 + fgB * 0.35);
-  return `#${toHexChannel(hR)}${toHexChannel(hG)}${toHexChannel(hB)}`;
-}
-
 export function readWaveSettingsFromValues(
   values: Readonly<Record<string, unknown>>,
 ): WaveSettings {
@@ -172,85 +172,42 @@ export function readWaveSettingsFromValues(
         : DEFAULT_WAVE_SETTINGS.spacingMode;
 
   return {
-    amplitude: clampNumber(
-      values["motion.amplitude"],
+    ambientIntensity: clampNumber(
+      values["appearance.ambientIntensity"],
       0,
       100,
-      DEFAULT_WAVE_SETTINGS.amplitude,
+      DEFAULT_WAVE_SETTINGS.ambientIntensity,
     ),
-    apexRounding: clampNumber(
-      values["appearance.apexRounding"],
-      8,
-      120,
-      DEFAULT_WAVE_SETTINGS.apexRounding,
-    ),
-    arcBreadth: clampNumber(
-      values["shape.arcBreadth"],
-      20,
-      100,
-      DEFAULT_WAVE_SETTINGS.arcBreadth,
-    ),
-    arcHeight: clampNumber(
-      values["shape.arcHeight"],
-      0,
-      100,
-      DEFAULT_WAVE_SETTINGS.arcHeight,
-    ),
-    background: readHexColor(
-      values["appearance.background"],
-      DEFAULT_WAVE_SETTINGS.background,
-    ),
-    includeBackground:
-      typeof values["export.includeBackground"] === "boolean"
-        ? values["export.includeBackground"]
-        : DEFAULT_WAVE_SETTINGS.includeBackground,
-    irregularity: clampNumber(
-      values["shape.irregularity"],
-      0,
-      100,
-      DEFAULT_WAVE_SETTINGS.irregularity,
-    ),
-    lineColor: readHexColor(
-      values["appearance.lineColor"],
-      DEFAULT_WAVE_SETTINGS.lineColor,
-    ),
-    lineCount: Math.round(
-      clampNumber(
-        values["shape.lineCount"],
-        5,
-        26,
-        DEFAULT_WAVE_SETTINGS.lineCount,
-      ),
-    ),
-    lineWidth: clampNumber(
-      values["appearance.lineWidth"],
-      2,
-      24,
-      DEFAULT_WAVE_SETTINGS.lineWidth,
-    ),
-    reliefStrength: clampNumber(
-      values["appearance.reliefStrength"],
-      0,
-      100,
-      DEFAULT_WAVE_SETTINGS.reliefStrength,
-    ),
-    grain: clampNumber(
-      values["appearance.grain"],
-      0,
-      100,
-      DEFAULT_WAVE_SETTINGS.grain,
-    ),
-    spacing: clampNumber(
-      values["shape.spacing"],
-      45,
-      145,
-      DEFAULT_WAVE_SETTINGS.spacing,
-    ),
+    ambientTone:
+      values["appearance.ambientTone"] === "light"
+        ? "light"
+        : DEFAULT_WAVE_SETTINGS.ambientTone,
+    amplitude: clampNumber(values["motion.amplitude"], 0, 100, DEFAULT_WAVE_SETTINGS.amplitude),
+    apexRounding: clampNumber(values["appearance.apexRounding"], 8, 120, DEFAULT_WAVE_SETTINGS.apexRounding),
+    arcBreadth: clampNumber(values["shape.arcBreadth"], 20, 100, DEFAULT_WAVE_SETTINGS.arcBreadth),
+    arcHeight: clampNumber(values["shape.arcHeight"], 0, 100, DEFAULT_WAVE_SETTINGS.arcHeight),
+    background: readHexColor(values["appearance.background"], DEFAULT_WAVE_SETTINGS.background),
+    glassBlur: clampNumber(values["appearance.glassBlur"], 10, 100, DEFAULT_WAVE_SETTINGS.glassBlur),
+    glassColor: readHexColor(values["appearance.glassColor"], DEFAULT_WAVE_SETTINGS.glassColor),
+    grain: clampNumber(values["appearance.grain"], 0, 100, DEFAULT_WAVE_SETTINGS.grain),
+    includeBackground: typeof values["export.includeBackground"] === "boolean"
+      ? values["export.includeBackground"]
+      : DEFAULT_WAVE_SETTINGS.includeBackground,
+    irregularity: clampNumber(values["shape.irregularity"], 0, 100, DEFAULT_WAVE_SETTINGS.irregularity),
+    lineColor: readHexColor(values["appearance.lineColor"], DEFAULT_WAVE_SETTINGS.lineColor),
+    lineCount: Math.round(clampNumber(values["shape.lineCount"], 5, 26, DEFAULT_WAVE_SETTINGS.lineCount)),
+    lineWidth: clampNumber(values["appearance.lineWidth"], 2, 24, DEFAULT_WAVE_SETTINGS.lineWidth),
+    reliefStrength: clampNumber(values["appearance.reliefStrength"], 0, 100, DEFAULT_WAVE_SETTINGS.reliefStrength),
+    spacing: clampNumber(values["shape.spacing"], 45, 145, DEFAULT_WAVE_SETTINGS.spacing),
     spacingMode,
     style:
       values["appearance.style"] === "ambient"
         ? "ambient"
-        : "classic",
+        : values["appearance.style"] === "flute"
+          ? "flute"
+          : values["appearance.style"] === "glass"
+            ? "glass"
+            : "classic",
   };
 }
 
@@ -333,7 +290,7 @@ export function evaluateWaveScene(
   const shadowOpacity = Math.min(0.72, reliefNormalized * 0.58);
   const foregroundOpacity = 0.56 + (1 - reliefNormalized * 0.3) * 0.22;
 
-  const isAtmospheric = settings.style === "ambient";
+  const isAtmospheric = settings.style !== "classic";
 
   const lines: WaveLineGeometry[] = [];
 
@@ -404,8 +361,15 @@ export function evaluateWaveScene(
       `L ${formatCoord(bottomX)} ${formatCoord(bottomY)}`,
     ].join(" ");
 
+    const ambientIntensityNormalized = isAtmospheric
+      ? settings.ambientIntensity / 100
+      : 0;
+    const minAlpha =
+      0.32 + (foregroundOpacity - 0.32) * (1 - ambientIntensityNormalized);
+    const maxAlpha =
+      0.9 + (foregroundOpacity - 0.9) * (1 - ambientIntensityNormalized);
     const lineForegroundOpacity = isAtmospheric
-      ? 0.32 + 0.58 * linearU
+      ? minAlpha + (maxAlpha - minAlpha) * linearU
       : foregroundOpacity;
     const lineForegroundStrokeWidth = isAtmospheric
       ? foregroundStrokeWidth * (0.85 + 0.35 * linearU)
@@ -443,56 +407,75 @@ export function evaluateWaveScene(
     height * 0.36 +
     Math.sin(tauPhase) * height * (0.04 + amplitudeNormalized * 0.14);
 
-  const lineBlendMode = isAtmospheric ? "screen" : "normal";
+  const ambientIntensityNormalized = isAtmospheric
+    ? settings.ambientIntensity / 100
+    : 0;
+  const isLightTone = settings.ambientTone === "light";
+  const lineBlendMode =
+    isAtmospheric && ambientIntensityNormalized > 0.25 && !isLightTone
+      ? "screen"
+      : "normal";
   const hasMeshBackground = isAtmospheric && settings.includeBackground;
-  const meshBaseColor = deriveAmbientBaseColor(settings.background);
-  const meshLights: WaveMeshLight[] = isAtmospheric
-    ? [
-        {
-          color: settings.lineColor,
-          cx: crestX,
-          cy: crestY,
-          opacity: 0.45,
-          r: Math.max(width, height) * (0.50 + arcBreadthNormalized * 0.25),
-        },
-        {
-          color: settings.background,
-          cx: width * (0.15 + 0.10 * arcBreadthNormalized),
-          cy: height * (0.75 - 0.10 * arcHeightNormalized),
-          opacity: 0.55,
-          r: Math.max(width, height) * (0.50 + 0.20 * (settings.spacing / 100)),
-        },
-        {
-          color: deriveAmbientHarmonicColor(
-            settings.background,
-            settings.lineColor,
-          ),
-          cx: width * 0.82,
-          cy: height * (0.65 - 0.15 * amplitudeNormalized),
-          opacity: 0.38,
-          r: Math.max(width, height) * 0.60,
-        },
-      ]
-    : [];
+  const meshBaseColor = deriveAmbientBaseColor(
+    settings.background,
+    ambientIntensityNormalized,
+    settings.ambientTone,
+  );
+  const meshLights = buildMeshLights({
+    ambientIntensityNormalized,
+    ambientTone: settings.ambientTone,
+    amplitudeNormalized,
+    arcBreadthNormalized,
+    arcHeightNormalized,
+    backgroundColor: settings.background,
+    crestX,
+    crestY,
+    glassBlurNormalized: settings.glassBlur / 100,
+    glassColor: settings.glassColor,
+    harmonicColor: deriveAmbientHarmonicColor(
+      settings.background,
+      settings.lineColor,
+    ),
+    height,
+    isAtmospheric,
+    lineColor: settings.lineColor,
+    spacing: settings.spacing,
+    style: settings.style,
+    tauPhase,
+    width,
+  });
 
   const hasGrain =
     isAtmospheric && settings.includeBackground && settings.grain > 0;
-  const grainOpacity = hasGrain ? (settings.grain / 100) * 0.32 : 0;
+  const grainOpacity = hasGrain ? (settings.grain / 100) * 0.4 : 0;
 
+  const hasFacets =
+    (settings.style === "flute" || settings.style === "glass") &&
+    settings.includeBackground;
+  const isRefractive = settings.style === "glass";
   const facets = buildWaveFacets(
     lines,
-    isAtmospheric && settings.includeBackground,
+    hasFacets,
+    isRefractive,
     reliefNormalized,
     settings.lineColor,
     shadowColor,
+    tauPhase,
+    amplitudeNormalized,
+    crestX,
+    width,
   );
 
   return {
+    ambientIntensity: settings.ambientIntensity,
+    ambientTone: settings.ambientTone,
     background: settings.background,
     crestPoint: { x: crestX, y: crestY },
     facets,
     foregroundOpacity,
     foregroundStrokeWidth,
+    glassBlur: settings.glassBlur,
+    glassColor: settings.glassColor,
     grain: settings.grain,
     grainOpacity,
     hasGrain,
@@ -568,29 +551,33 @@ function strokeAmbientLinesOnCanvas(
 function drawMeshLightsOnCanvas(
   ctx: CanvasRenderingContext2D,
   scene: WaveSceneGeometry,
+  offsetY = 0,
 ): void {
   if (!scene.hasMeshBackground || scene.meshLights.length === 0) {
     return;
   }
+  const bleedX = scene.width * 0.5;
+  const bleedY = scene.height * 0.5;
   ctx.save();
   ctx.fillStyle = scene.meshBaseColor;
-  ctx.fillRect(0, 0, scene.width, scene.height);
+  ctx.fillRect(-bleedX, -bleedY, scene.width * 2, scene.height * 2);
   for (const light of scene.meshLights) {
     const grad = ctx.createRadialGradient(
       light.cx,
-      light.cy,
+      light.cy + offsetY,
       0,
       light.cx,
-      light.cy,
+      light.cy + offsetY,
       light.r,
     );
-    grad.addColorStop(0, light.color);
-    grad.addColorStop(0.5, light.color);
+    grad.addColorStop(0, light.coreColor ?? light.color);
+    grad.addColorStop(0.25, light.color);
+    grad.addColorStop(0.55, light.color);
     grad.addColorStop(1, "transparent");
     ctx.save();
     ctx.globalAlpha = light.opacity;
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, scene.width, scene.height);
+    ctx.fillRect(-bleedX, -bleedY, scene.width * 2, scene.height * 2);
     ctx.restore();
   }
   ctx.restore();
@@ -603,7 +590,7 @@ function drawWaveShadowOnCanvas(
   if (scene.shadowOpacity <= 0.005) {
     return;
   }
-  if (scene.style === "ambient") {
+  if (scene.style !== "classic") {
     ctx.save();
     ctx.strokeStyle = scene.shadowColor;
     strokeAmbientLinesOnCanvas(
@@ -633,7 +620,7 @@ function drawWaveForegroundOnCanvas(
   ctx: CanvasRenderingContext2D,
   scene: WaveSceneGeometry,
 ): void {
-  if (scene.style === "ambient") {
+  if (scene.style !== "classic") {
     ctx.save();
     if (scene.lineBlendMode === "screen") {
       ctx.globalCompositeOperation = "screen";
@@ -671,7 +658,12 @@ export function renderWaveSceneToCanvas2D(
   }
 
   drawMeshLightsOnCanvas(ctx, scene);
-  drawWaveFacetsOnCanvas(ctx, scene.facets, scene.lines);
+  drawWaveFacetsOnCanvas(
+    ctx,
+    scene.facets,
+    scene.lines,
+    (offsetY) => drawMeshLightsOnCanvas(ctx, scene, offsetY),
+  );
   drawWaveShadowOnCanvas(ctx, scene);
   drawWaveForegroundOnCanvas(ctx, scene);
 

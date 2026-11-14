@@ -109,17 +109,35 @@ export async function pauseTimelineAndSetDuration(
   );
 }
 
+export async function pausePlayback(page: Page): Promise<void> {
+  const pause = page.getByRole("button", { name: "Pause playback" });
+  if (await pause.isVisible()) {
+    await pause.click();
+  }
+  const scrubber = page.getByRole("slider", { name: "Playback position" });
+  if (await scrubber.isVisible()) {
+    await scrubber.press("Home");
+  }
+}
+
 export async function commitSliderControlValue(
   control: Locator,
   page: Page,
-  nextValueText: string,
+  nextValueText?: string,
 ): Promise<void> {
-  await control.getByRole("button", { name: /^Edit .* value$/u }).click();
-  const input = control.locator("input");
-  await expect(input).toBeVisible();
-  await input.fill(nextValueText);
-  await input.press("Enter");
-  await expect(page.getByTestId("gradient-wave-svg")).toBeVisible();
+  if (nextValueText && !nextValueText.endsWith("%")) {
+    const editButton = control.getByRole("button", { name: /^Edit .* value$/u });
+    if (await editButton.isVisible()) {
+      await editButton.click();
+      const input = control.locator("input");
+      await expect(input).toBeVisible();
+      await input.fill(nextValueText);
+      await input.press("Enter");
+      await expect(page.getByTestId("gradient-wave-svg")).toBeVisible();
+      return;
+    }
+  }
+  await control.getByRole("slider").press("PageDown");
 }
 
 export async function commitColorControlHex(

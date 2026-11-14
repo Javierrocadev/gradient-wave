@@ -34,25 +34,38 @@ async function findToolcraftControlOwnerMatches(
   const boundaries = page
     .locator(TOOLCRAFT_APP_ROOT_SELECTOR)
     .locator(TOOLCRAFT_CONTROL_TARGET_BOUNDARY_SELECTOR);
-  const matches: ToolcraftControlOwnerMatch[] = [];
-  const boundaryCount = await boundaries.count();
-
-  for (let boundaryIndex = 0; boundaryIndex < boundaryCount; boundaryIndex += 1) {
-    const boundary = boundaries.nth(boundaryIndex);
-    const singleTarget = await boundary.getAttribute("data-toolcraft-control-target");
-    if (singleTarget === normalizedTarget) {
-      matches.push({ boundaryIndex });
-      continue;
-    }
-
-    const groupedTargets = parseTargetList(
-      await boundary.getAttribute("data-toolcraft-control-targets"),
-    );
-    const fieldIndex = groupedTargets.indexOf(normalizedTarget);
-    if (fieldIndex >= 0) {
-      matches.push({ boundaryIndex, fieldIndex });
-    }
-  }
+  const matches = await page.evaluate(
+    ({ rootSelector, boundarySelector, target }) => {
+      const root = document.querySelector(rootSelector);
+      if (!root) return [];
+      const allBoundaries = root.querySelectorAll(boundarySelector);
+      const results: Array<{ boundaryIndex: number; fieldIndex?: number }> = [];
+      for (let i = 0; i < allBoundaries.length; i++) {
+        const b = allBoundaries[i];
+        const single = b.getAttribute("data-toolcraft-control-target");
+        if (single === target) {
+          results.push({ boundaryIndex: i });
+          continue;
+        }
+        const grouped = b.getAttribute("data-toolcraft-control-targets");
+        if (grouped) {
+          try {
+            const list = JSON.parse(grouped);
+            if (Array.isArray(list)) {
+              const idx = list.indexOf(target);
+              if (idx >= 0) results.push({ boundaryIndex: i, fieldIndex: idx });
+            }
+          } catch {}
+        }
+      }
+      return results;
+    },
+    {
+      rootSelector: TOOLCRAFT_APP_ROOT_SELECTOR,
+      boundarySelector: TOOLCRAFT_CONTROL_TARGET_BOUNDARY_SELECTOR,
+      target: normalizedTarget,
+    },
+  );
 
   return { boundaries, matches };
 }

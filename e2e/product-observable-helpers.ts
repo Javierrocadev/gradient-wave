@@ -23,6 +23,7 @@ const defaultProductObservableSelector = [
   "[data-toolcraft-canvas-world] svg",
 ].join(", ");
 export type ToolcraftProductObservableSnapshotOptions = {
+  region?: { height: number; width: number; x: number; y: number };
   selector?: string;
   timeoutMs?: number;
 };
@@ -32,6 +33,7 @@ export type ToolcraftProductObservableChangeOptions =
     baselineStabilityIntervalMs?: number;
     baselineStabilitySamples?: number;
     message?: string;
+    pollIntervalMs?: number;
     requirementId?: string;
     stabilityIntervalMs?: number;
     stabilitySamples?: number;
@@ -44,7 +46,7 @@ export async function getToolcraftProductObservableSnapshot(
   const selector = options.selector ?? defaultProductObservableSelector;
   const probe = await resolveToolcraftProductRasterProbe(
     page,
-    { selector },
+    { region: options.region, selector },
     options.timeoutMs,
   );
   return probe.capture();
@@ -82,8 +84,15 @@ export async function expectToolcraftProductObservableToChange(
     );
   }
 
+  const selector = options.selector ?? defaultProductObservableSelector;
+  const probe = await resolveToolcraftProductRasterProbe(
+    page,
+    { region: options.region, selector },
+    options.timeoutMs,
+  );
+
   await expectToolcraftPersistentOutcomeAfterAction(
-    () => getToolcraftProductObservableSnapshot(page, options),
+    probe.capture,
     runAction,
     {
       baselineStabilityIntervalMs: options.baselineStabilityIntervalMs,
@@ -91,6 +100,7 @@ export async function expectToolcraftProductObservableToChange(
       message:
         options.message ??
         "Product output should change after the visible user interaction.",
+      pollIntervalMs: options.pollIntervalMs,
       stabilityIntervalMs: options.stabilityIntervalMs,
       stabilitySamples: options.stabilitySamples,
       timeoutMs: options.timeoutMs ?? 5000,
@@ -98,9 +108,6 @@ export async function expectToolcraftProductObservableToChange(
   );
 
   if (options.requirementId !== undefined) {
-    await getToolcraftBrowserProofPage(
-      pageOrSession as ToolcraftBrowserProofSession,
-    );
     await attachToolcraftBrowserRuntimeEvidence({
       evidenceType: "product-observable-change",
       requirementId: options.requirementId,
