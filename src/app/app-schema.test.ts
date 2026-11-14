@@ -13,7 +13,10 @@ describe("appSchema", () => {
   it("publishes the Gradient Wave Toolcraft product contract", () => {
     expect(appSchema.canvas.draggable).toBe(true);
     expect(appSchema.canvas.enabled).toBe(true);
-    expect(appSchema.canvas.sizing).toEqual({ mode: "editable-output" });
+    expect(appSchema.canvas.sizing).toEqual({
+      defaultMode: "finite",
+      mode: "editable-output",
+    });
     expect(appSchema.canvas.upload).toBe(false);
     expect(appSchema.canvas.size).toEqual({
       height: 700,

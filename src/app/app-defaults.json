@@ -1,1 +1,94 @@
-null
+{
+  "version": 2,
+  "appId": "gradient-wave",
+  "state": {
+    "values": {
+      "export.includeBackground": true,
+      "appearance.background": "#980B0B",
+      "canvas.workspaceBackground": "dots",
+      "canvas.aspectRatio": {
+        "height": 7,
+        "mode": "custom",
+        "value": "12:7",
+        "width": 12
+      },
+      "canvas.size.width": 1200,
+      "canvas.size.height": 700,
+      "shape.lineCount": 16,
+      "shape.spacing": 100,
+      "shape.spacingMode": "irregular",
+      "shape.irregularity": 76,
+      "shape.arcHeight": 100,
+      "shape.arcBreadth": 20,
+      "motion.amplitude": 88,
+      "appearance.style": "flute",
+      "appearance.ambientIntensity": 65,
+      "appearance.ambientTone": "dark",
+      "appearance.grain": 24,
+      "appearance.lineWidth": 17,
+      "appearance.apexRounding": 41,
+      "appearance.lineColor": "#FFFFFF",
+      "appearance.reliefStrength": 68,
+      "appearance.glassColor": "#FFFFFF",
+      "appearance.glassBlur": 48,
+      "export.image.format": "png",
+      "export.image.resolution": "4k",
+      "export.video.format": "mp4",
+      "export.video.resolution": "current"
+    },
+    "canvas": {
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "height": 700,
+        "unit": "px",
+        "width": 1200
+      },
+      "zoom": 100,
+      "mode": "finite"
+    },
+    "panels": {
+      "controls": {
+        "collapsedSections": {},
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "layers": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "timeline": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "toolbar": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    "timeline": {
+      "currentTimeSeconds": 1.5784000000058303,
+      "durationSeconds": 6,
+      "expanded": false,
+      "isLooping": true,
+      "isPlaying": false,
+      "selectedKeyframeId": null,
+      "keyframeGroups": []
+    },
+    "layers": [],
+    "selectedLayerId": null,
+    "mediaAssets": []
+  },
+  "resources": [],
+  "theme": "dark"
+}

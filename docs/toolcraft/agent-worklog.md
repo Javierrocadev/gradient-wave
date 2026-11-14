@@ -3,7 +3,7 @@
 ## Status
 
 Mode: product
-Active change: delivery-1-gradient-wave
+Active change: supplied-flute-defaults
 
 ## Decisions
 
@@ -132,6 +132,21 @@ Active change: delivery-1-gradient-wave
 - Performance intent: ordinary-product-work
 - Verification: `npm run typecheck`, `npm run docs:check`, `node scripts/check-toolcraft-integrity.mjs`, Vitest worklog test, and Playwright e2e test suite (9 passed).
 - Risks: None; Classic mode remains unchanged and fully backwards compatible.
+
+### Supplied Flute Workspace Defaults
+
+- Change ID: supplied-flute-defaults
+- Request: "haz este el predeterminado crea el commit y subelo directamente" with `gradient-wave-settings (1).json`.
+- Task type: Later focused defaults update; no renderer, runtime, persistence format, or export capability changes.
+- Decision: Convert the supplied settings v3 through the public runtime settings codec into a validated complete v2 source snapshot in `src/app/app-defaults.json`. Preserve every supplied value, hidden Glass settings, custom 12:7 finite 1200x700 canvas, six-second loop, and paused playhead at 1.5784000000058303 seconds. Keep existing schema assembly and local persistence precedence.
+- Changed owners: `src/app/app-defaults.json`, product defaults regression tests, and the schema sizing assertion.
+- User-visible result: New workspaces and global Reset use the supplied red Flute composition; existing saved workspaces retain their settings until Reset.
+- Verification plan: Focused defaults RED/GREEN unit tests, existing schema tests, fresh-browser startup/reset pixel comparison, and `test:feature -- persistence.reload`. No aggregate delivery, build, export matrix, or measured performance run.
+- Verification: Defaults regression test observed RED before the snapshot, then all three defaults tests passed. Exact comparison with the attachment passed for all 24 values, canvas size/mode/aspect ratio, and five timeline fields. Fresh-browser startup/reset passed (9.4s) with restored decoded product pixels; the existing persistence/reload browser test passed (10.1s). `git diff --check` passed. No build, aggregate delivery, export matrix, or measured performance was run.
+- Existing check limitations: The existing schema suite passed three of four tests; its acceptance test reports missing inventory/finite-selector/acceptance coverage for `appearance.ambientTone`, already absent in HEAD. The canonical `test:feature -- persistence.reload` launcher failed twice before browser execution with Windows `EPERM` while renaming a journal directory with an open events file; the exact persistence browser test was run directly instead. No copied framework code was changed. Initial smoke attempts needed the existing 15-second cold-start allowance and an unobstructed pixel region; an additional attempt encountered a transient dynamic-module fetch failure before the final passing run.
+- Native assessment: medium, `review_due: false`, reason `under_budget`; no candidate review was started.
+- Risk: none; this adds source defaults using existing codecs and does not change shared runtime logic or stored user data.
+- Rollback boundary: Remove this source snapshot and its focused regression expectations; no other behavior or resource is changed.
 
 ## Evidence
 
